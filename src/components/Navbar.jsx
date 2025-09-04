@@ -9,7 +9,7 @@ const Navbar = () => {
   const user = useSelector((store) => store.user);
   const dispatch = useDispatch()
   const navigate = useNavigate();
-  console.log(user);
+  // console.log(user);
   const handleLogout = async() => {
     try{
       // const res = await fetch("http://localhost:4000/logout", {
@@ -19,7 +19,7 @@ const Navbar = () => {
       return navigate("/login")
 
     }catch(err){
-      console.log(err);
+      // console.log(err);
     }
     
     // console.log("Logout clicked");

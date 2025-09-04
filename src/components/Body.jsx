@@ -25,7 +25,7 @@ const Body = () => {
         if (err.status === 401) {
           navigate("/login"); // ✅ use lowercase navigate
         }
-        console.log(err);
+        // console.log(err);
       }
     };
 
