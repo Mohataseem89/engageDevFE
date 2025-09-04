@@ -12,6 +12,7 @@ const Login = () => {
   const [password, setPassword] = useState("Meena@123");
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [error, setError] = useState("");
 
   const handleLogin = async () => {
     try {
@@ -30,7 +31,10 @@ const Login = () => {
       // dispatch({ type: "user/login", payload: res.data });
       // console.log(res);
     } catch (err) {
-      console.error("Error during login:", err);
+      // console.log(err?.response?.message)
+      console.log(err?.response?.message || "Something went wrong");
+      setError(err?.response?.data?.data || "Something went wrong");
+      // console.error("Error during login:", err);
     }
   };
 
@@ -61,6 +65,7 @@ const Login = () => {
             />
             <p className="label">Mandatory</p>
           </fieldset>
+          <p className="text-red-500">{error}</p>
           <div className="card-actions justify-center">
             <button className="btn btn-primary" onClick={handleLogin}>
               Login
