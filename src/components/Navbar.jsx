@@ -5,6 +5,7 @@ import { BASE_URL } from "../utils/constants";
 import { removeUser } from "../utils/userSlice";
 import { useNavigate } from "react-router-dom";
 
+
 const Navbar = () => {
   const user = useSelector((store) => store.user);
   const dispatch = useDispatch();
