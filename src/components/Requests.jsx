@@ -28,7 +28,7 @@ const Requests = () => {
       );
       dispatch(removeRequest(_id));
     } catch (err) {
-      console.error("Error reviewing request:", err);
+      // console.error("Error reviewing request:", err);
       alert("Failed to process the request. Please try again.");
     } finally {
       setProcessingId(null);
@@ -44,7 +44,7 @@ const Requests = () => {
         withCredentials: true,
       });
 
-      console.log("API Response:", res.data);
+      // console.log("API Response:", res.data);
 
       if (res.data && Array.isArray(res.data.data)) {
         // Filter out requests without valid fromUserId
@@ -56,7 +56,7 @@ const Requests = () => {
         dispatch(addRequests([]));
       }
     } catch (err) {
-      console.error("Error fetching requests:", err);
+      // console.error("Error fetching requests:", err);
       setError(
         err.response?.data?.message || 
         "Failed to load requests. Please try again."
@@ -124,7 +124,7 @@ const Requests = () => {
         {requests.map((request) => {
           // Safely destructure with null checks
           if (!request || !request.fromUserId) {
-            console.warn("Invalid request data:", request);
+            // console.warn("Invalid request data:", request);
             return null;
           }
 

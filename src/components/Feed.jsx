@@ -21,7 +21,7 @@ const Feed = () => {
         withCredentials: true,
       });
       
-      console.log("Feed API Response:", res.data);
+      // console.log("Feed API Response:", res.data);
       
       // Handle different response structures
       let feedData = [];
@@ -34,7 +34,7 @@ const Feed = () => {
       dispatch(addFeed(feedData));
       
     } catch (err) {
-      console.error("Error fetching feed:", err);
+      // console.error("Error fetching feed:", err);
       setError("Failed to load users. Please try again.");
     } finally {
       setLoading(false);
@@ -49,7 +49,7 @@ const Feed = () => {
   // Auto-refresh feed when it becomes empty
   useEffect(() => {
     if (!initialLoad && feed && feed.length === 0) {
-      console.log("Feed is empty, refreshing...");
+      // console.log("Feed is empty, refreshing...");
       setTimeout(() => {
         getfeed();
       }, 1000);

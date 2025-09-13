@@ -68,7 +68,7 @@ const EditProfile = ({ user }) => {
       } else {
         setError("An unexpected error occurred");
       }
-      console.error("Profile update error:", err);
+      // console.error("Profile update error:", err);
     } finally {
       setIsLoading(false);
     }

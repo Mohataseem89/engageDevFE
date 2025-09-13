@@ -21,7 +21,7 @@ const UserCard = ({ user }) => {
         { withCredentials: true }
       );
       
-      console.log("Request sent successfully:", res.data);
+      // console.log("Request sent successfully:", res.data);
       
       // Remove user from feed after successful request
       setTimeout(() => {
@@ -29,7 +29,7 @@ const UserCard = ({ user }) => {
       }, 500); // Small delay for better UX
       
     } catch (err) {
-      console.error("Error sending request:", err);
+      // console.error("Error sending request:", err);
       setIsProcessing(false);
       setActionTaken(null);
       // You could add a toast notification here
