@@ -56,7 +56,15 @@ const Chat = () => {
     const socket = createSocketConnection();
     socketRef.current = socket;
 
-    socket.emit("joinChat", { targetUserId });
+    socket.on("connect", () => {
+      console.log("[socket] connected, joining chat with", targetUserId);
+      socket.emit("joinChat", { targetUserId });
+    });
+
+    socket.on("connect_error", (err) => {
+      console.error("[socket] connection error:", err.message);
+      toast.error("Chat connection failed: " + err.message);
+    });
 
     socket.on("messageReceived", (message) => {
       // Only append messages relevant to this specific conversation
@@ -83,6 +91,7 @@ const Chat = () => {
 
   const sendMessage = () => {
     if (!text.trim() || !socketRef.current) return;
+    console.log("[socket] sending message to", targetUserId, ":", text.trim());
     socketRef.current.emit("sendMessage", { targetUserId, text: text.trim() });
     setText("");
   };
