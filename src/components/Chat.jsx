@@ -15,9 +15,11 @@ const Chat = () => {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
 
   const socketRef = useRef(null);
   const bottomRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const targetUser = Array.isArray(connections)
     ? connections.find((c) => c && c._id === targetUserId)
@@ -103,6 +105,46 @@ const Chat = () => {
     }
   };
 
+  const handleFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File must be under 10MB");
+      e.target.value = "";
+      return;
+    }
+
+    const uploadData = new FormData();
+    uploadData.append("file", file);
+
+    try {
+      setIsUploadingFile(true);
+      const res = await axios.post(
+        `${BASE_URL}/chat/upload/${targetUserId}`,
+        uploadData,
+        {
+          withCredentials: true,
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+      socketRef.current?.emit("sendMessage", {
+        targetUserId,
+        fileUrl: res.data.fileUrl,
+        fileType: res.data.fileType,
+      });
+    } catch (err) {
+      toast.error(
+        typeof err.response?.data === "string"
+          ? err.response.data
+          : "Failed to send file"
+      );
+    } finally {
+      setIsUploadingFile(false);
+      e.target.value = "";
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -169,7 +211,28 @@ const Chat = () => {
                         : "bg-white text-gray-900 border border-gray-200 rounded-bl-sm"
                     }`}
                   >
-                    <p className="text-sm break-words">{msg.text}</p>
+                    {msg.fileType === "image" && msg.fileUrl && (
+                      <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer">
+                        <img
+                          src={msg.fileUrl}
+                          alt="Shared"
+                          className="rounded-lg max-w-full max-h-64 mb-1 object-cover"
+                        />
+                      </a>
+                    )}
+                    {msg.fileType === "file" && msg.fileUrl && (
+                      <a
+                        href={msg.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`flex items-center gap-2 text-sm underline mb-1 ${
+                          isMine ? "text-white" : "text-blue-600"
+                        }`}
+                      >
+                        📎 Download file
+                      </a>
+                    )}
+                    {msg.text && <p className="text-sm break-words">{msg.text}</p>}
                   </div>
                 </div>
               );
@@ -181,7 +244,27 @@ const Chat = () => {
 
       {/* Input */}
       <div className="bg-white border-t border-gray-200 px-4 py-3">
-        <div className="max-w-3xl mx-auto flex gap-2">
+        <div className="max-w-3xl mx-auto flex gap-2 items-center">
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            onChange={handleFileSelect}
+            disabled={isUploadingFile}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploadingFile}
+            className="btn btn-ghost btn-sm text-black"
+            title="Attach a file or photo"
+          >
+            {isUploadingFile ? (
+              <span className="loading loading-spinner loading-xs"></span>
+            ) : (
+              "📎"
+            )}
+          </button>
           <input
             type="text"
             value={text}

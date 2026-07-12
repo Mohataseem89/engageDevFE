@@ -15,6 +15,7 @@ const EditProfile = ({ user }) => {
   });
   
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [notification, setNotification] = useState({ message: '', type: '' });
   const dispatch = useDispatch();
 
@@ -25,6 +26,40 @@ const EditProfile = ({ user }) => {
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handlePhotoSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      showNotification("Please select an image file", "error");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showNotification("Image must be under 5MB", "error");
+      return;
+    }
+
+    const uploadData = new FormData();
+    uploadData.append("photo", file);
+
+    try {
+      setIsUploadingPhoto(true);
+      const res = await axios.post(`${BASE_URL}/profile/upload-photo`, uploadData, {
+        withCredentials: true,
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setFormData((prev) => ({ ...prev, photoUrl: res.data.photoUrl }));
+      showNotification("Photo uploaded! Don't forget to save your profile.", "success");
+    } catch (err) {
+      showNotification(
+        err.response?.data || "Failed to upload photo. Please try again.",
+        "error"
+      );
+    } finally {
+      setIsUploadingPhoto(false);
+    }
   };
 
   const saveProfile = async () => {
@@ -196,20 +231,37 @@ const EditProfile = ({ user }) => {
                     </div>
                   </div>
 
-                  {/* Photo URL */}
+                  {/* Profile Photo */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Profile Photo URL
+                      Profile Photo
                     </label>
-                    <input
-                      type="url"
-                      value={formData.photoUrl}
-                      className="w-full px-4 py-3 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                      placeholder="https://example.com/your-photo.jpg"
-                      onChange={(e) => handleInputChange('photoUrl', e.target.value)}
-                    />
+                    <div className="flex items-center gap-4">
+                      <img
+                        src={
+                          formData.photoUrl ||
+                          `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.firstName || 'User')}&background=6366f1&color=fff`
+                        }
+                        alt="Current"
+                        className="w-16 h-16 rounded-full object-cover border border-gray-200"
+                      />
+                      <label className="btn btn-outline btn-sm cursor-pointer">
+                        {isUploadingPhoto ? (
+                          <span className="loading loading-spinner loading-xs"></span>
+                        ) : (
+                          "Upload Photo"
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handlePhotoSelect}
+                          disabled={isUploadingPhoto}
+                        />
+                      </label>
+                    </div>
                     <p className="mt-1 text-xs text-gray-500">
-                      Paste a link to your profile picture
+                      JPG, PNG or WEBP, up to 5MB
                     </p>
                   </div>
 
