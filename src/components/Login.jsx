@@ -40,7 +40,11 @@ const Login = () => {
       return "No account found with this email. Please check your email or sign up.";
     }
     
-    if (errorString.includes("Invalid password") || errorString.includes("password")) {
+    if (errorString.includes("not strong enough")) {
+      return "Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number, and a symbol.";
+    }
+    
+    if (errorString.includes("Invalid password")) {
       return "Incorrect password. Please try again.";
     }
     
@@ -70,7 +74,13 @@ const Login = () => {
       return false;
     }
 
-    if (password.length < 6) {
+    if (!isLoginForm) {
+      const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+      if (!strongPasswordRegex.test(password)) {
+        setError("Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number, and a symbol.");
+        return false;
+      }
+    } else if (password.length < 6) {
       setError("Password must be at least 6 characters long");
       return false;
     }
@@ -281,7 +291,7 @@ const Login = () => {
                     </svg>
                   </button>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Minimum 6 characters</p>
+                <p className="text-xs text-gray-500 mt-1">Min 8 characters, with uppercase, lowercase, number & symbol</p>
               </div>
             </div>
 
