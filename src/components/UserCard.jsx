@@ -37,6 +37,15 @@ const UserCard = ({ user }) => {
     }
   };
 
+  // Skip is intentionally NOT sent to the backend — no ConnectionRequest record is created,
+  // so this user can reappear in a future feed load. Unlike Ignore, this is not a permanent decision.
+  const handleSkip = (userId) => {
+    setActionTaken("skipped");
+    setTimeout(() => {
+      dispatch(removeUserFromFeed(userId));
+    }, 350);
+  };
+
   // If action is taken, show feedback animation
   if (actionTaken) {
     return (
@@ -44,11 +53,13 @@ const UserCard = ({ user }) => {
         <div className="card bg-base-100 w-96 max-w-sm shadow-xl border border-base-200 opacity-75 transform scale-95 transition-all duration-500">
           <div className="card-body p-6 text-center">
             <div className="text-4xl mb-4">
-              {actionTaken === "interested" ? "💖" : "👋"}
+              {actionTaken === "interested" ? "💖" : actionTaken === "skipped" ? "⏭️" : "👋"}
             </div>
             <h3 className="text-lg font-semibold">
               {actionTaken === "interested" 
                 ? `You're interested in ${firstName}!` 
+                : actionTaken === "skipped"
+                ? `Skipped ${firstName} — you may see them again later`
                 : `${firstName} has been ignored`}
             </h3>
             <p className="text-sm text-base-content/60 mt-2">
@@ -104,9 +115,9 @@ const UserCard = ({ user }) => {
           )}
 
           {/* Action Buttons */}
-          <div className="card-actions justify-center pt-4 space-x-3">
+          <div className="card-actions justify-center pt-4 gap-2">
             <button
-              className={`btn btn-outline btn-error flex-1 max-w-32 group hover:scale-105 transition-all duration-200 ${
+              className={`btn btn-outline btn-error flex-1 group hover:scale-105 transition-all duration-200 ${
                 isProcessing ? 'loading' : ''
               }`}
               onClick={() => handlerequest("ignored", _id)}
@@ -125,9 +136,27 @@ const UserCard = ({ user }) => {
               )}
               {isProcessing && actionTaken === "ignored" ? "" : "Ignore"}
             </button>
+
+            <button
+              className="btn btn-outline btn-neutral flex-1 group hover:scale-105 transition-all duration-200"
+              onClick={() => handleSkip(_id)}
+              disabled={isProcessing}
+              aria-label={`Skip ${firstName} for now`}
+              title="Skip for now — you might see them again later"
+            >
+              <svg
+                className="w-4 h-4 mr-1 group-hover:scale-110 transition-transform duration-200"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+              </svg>
+              Skip
+            </button>
             
             <button
-              className={`btn btn-primary flex-1 max-w-32 group hover:scale-105 transition-all duration-200 ${
+              className={`btn btn-primary flex-1 group hover:scale-105 transition-all duration-200 ${
                 isProcessing ? 'loading' : ''
               }`}
               onClick={() => handlerequest("interested", _id)}
