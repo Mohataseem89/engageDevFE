@@ -13,7 +13,15 @@ const Feed = () => {
   const [error, setError] = useState(null);
   const [initialLoad, setInitialLoad] = useState(true);
   const [notification, setNotification] = useState({ message: '', type: '' });
-  
+
+  // Pagination — kept in refs (not just state) so the empty-feed effect below always
+  // reads the latest page/hasMore/skills without depending on stale closures.
+  const pageRef = useRef(1);
+  const hasMoreRef = useRef(true);
+  const appliedSkillsRef = useRef("");
+  const [skillsInput, setSkillsInput] = useState("");
+  const [appliedSkills, setAppliedSkills] = useState("");
+
   // Swipe functionality state
   const [isSwipeActive, setIsSwipeActive] = useState(false);
   const [swipeDirection, setSwipeDirection] = useState('');
@@ -28,28 +36,40 @@ const Feed = () => {
     setTimeout(() => setNotification({ message: '', type: '' }), 3000);
   };
 
-  const getfeed = async (showMessage = false) => {
+  const getfeed = async (pageToFetch = 1, skillsOverride, showMessage = false) => {
+    const skills =
+      skillsOverride !== undefined ? skillsOverride : appliedSkillsRef.current;
     try {
       setLoading(true);
       setError(null);
-      
+
+      const params = { page: pageToFetch, limit: 10 };
+      if (skills) params.skills = skills;
+
       const res = await axios.get(BASE_URL + "/feed", {
+        params,
         withCredentials: true,
       });
-      
+
       let feedData = [];
       if (res.data.data && Array.isArray(res.data.data)) {
         feedData = res.data.data;
       } else if (Array.isArray(res.data)) {
         feedData = res.data;
       }
-      
+
       dispatch(addFeed(feedData));
-      
+      pageRef.current = pageToFetch;
+      hasMoreRef.current = res.data.pagination
+        ? res.data.pagination.hasMore
+        : feedData.length >= 10;
+
       if (showMessage) {
-        showNotification(`Found ${feedData.length} new profiles!`, 'success');
+        showNotification(
+          `Found ${feedData.length} new profile${feedData.length !== 1 ? "s" : ""}!`,
+          "success"
+        );
       }
-      
     } catch (err) {
       console.error("Error fetching feed:", err);
       setError(
@@ -63,6 +83,21 @@ const Feed = () => {
       setLoading(false);
       setInitialLoad(false);
     }
+  };
+
+  const applySkillsFilter = (e) => {
+    e.preventDefault();
+    const trimmed = skillsInput.trim();
+    setAppliedSkills(trimmed);
+    appliedSkillsRef.current = trimmed;
+    getfeed(1, trimmed, true);
+  };
+
+  const clearSkillsFilter = () => {
+    setSkillsInput("");
+    setAppliedSkills("");
+    appliedSkillsRef.current = "";
+    getfeed(1, "", true);
   };
 
   const handleSwipeAction = async (action, userId, userName) => {
@@ -137,14 +172,19 @@ const Feed = () => {
   };
 
   useEffect(() => {
-    getfeed();
+    getfeed(1);
   }, []);
 
+  // When the current page of the feed has been fully swiped through, fetch the next
+  // page instead of re-fetching the same one — previously this retried page 1 forever.
   useEffect(() => {
     if (!initialLoad && (!feed || feed.length === 0) && !loading) {
-      setTimeout(() => {
-        getfeed(false);
-      }, 1000);
+      if (hasMoreRef.current) {
+        const timer = setTimeout(() => {
+          getfeed(pageRef.current + 1);
+        }, 500);
+        return () => clearTimeout(timer);
+      }
     }
   }, [feed, initialLoad, loading]);
 
@@ -196,7 +236,7 @@ const Feed = () => {
             className="btn btn-primary"
             onClick={() => {
               setError(null);
-              getfeed(true);
+              getfeed(1, undefined, true);
             }}
           >
             Try Again
@@ -219,6 +259,36 @@ const Feed = () => {
             <p className="text-gray-600">Find your next connection</p>
           </div>
 
+          {/* Skills Filter */}
+          <div className="max-w-md mx-auto mb-8">
+            <form onSubmit={applySkillsFilter} className="flex gap-2">
+              <input
+                type="text"
+                value={skillsInput}
+                onChange={(e) => setSkillsInput(e.target.value)}
+                placeholder="Filter by skills, e.g. React, Node.js"
+                className="input input-bordered flex-1 bg-white text-black"
+              />
+              <button type="submit" className="btn btn-primary" disabled={loading}>
+                Search
+              </button>
+            </form>
+            {appliedSkills && (
+              <div className="mt-3 flex items-center justify-center gap-2 text-sm text-gray-600">
+                <span>
+                  Filtering by: <span className="font-medium">{appliedSkills}</span>
+                </span>
+                <button
+                  onClick={clearSkillsFilter}
+                  className="text-blue-600 hover:text-blue-800 underline"
+                  disabled={loading}
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+          </div>
+
           {!feed || feed.length === 0 ? (
             <div className="text-center py-16">
               <div className="text-gray-400 text-6xl mb-6">🎉</div>
@@ -236,7 +306,7 @@ const Feed = () => {
                 <div className="space-y-4">
                   <button 
                     className="btn btn-primary"
-                    onClick={() => getfeed(true)}
+                    onClick={() => getfeed(1, undefined, true)}
                   >
                     Refresh Feed
                   </button>
@@ -314,7 +384,7 @@ const Feed = () => {
                 {/* Quick Actions */}
                 <div className="text-black flex justify-center space-x-3">
                   <button 
-                    onClick={() => getfeed(true)}
+                    onClick={() => getfeed(1, undefined, true)}
                     className="btn btn-outline btn-sm"
                     disabled={loading || isSwipeActive}
                   >
