@@ -3,22 +3,32 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
-import { addConnections, removeConnections } from "../utils/connectionsSlice";
+import { addConnections, appendConnections, removeConnections } from "../utils/connectionsSlice";
+
+const CONNECTIONS_PAGE_SIZE = 12;
 
 const Connections = () => {
   const dispatch = useDispatch();
   const connectionsFromStore = useSelector((store) => store.connections);
   
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
 
-  const fetchConnections = async () => {
+  const fetchConnections = async (pageToFetch = 1, append = false) => {
     try {
-      setLoading(true);
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
       setError(null);
-      
+
       const res = await axios.get(BASE_URL + "/user/connections", {
+        params: { page: pageToFetch, limit: CONNECTIONS_PAGE_SIZE },
         withCredentials: true,
       });
       
@@ -31,7 +41,13 @@ const Connections = () => {
         connectionsData = res.data.filter((c) => c);
       }
 
-      dispatch(addConnections(connectionsData));
+      dispatch(append ? appendConnections(connectionsData) : addConnections(connectionsData));
+      setPage(pageToFetch);
+      setHasMore(
+        res.data.pagination
+          ? res.data.pagination.hasMore
+          : connectionsData.length === CONNECTIONS_PAGE_SIZE
+      );
       
     } catch (err) {
       console.error("Error fetching connections:", err);
@@ -40,14 +56,21 @@ const Connections = () => {
         err.message || 
         "Failed to load connections. Please try again."
       );
-      dispatch(removeConnections());
+      if (!append) dispatch(removeConnections());
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMore = () => {
+    if (!loadingMore && hasMore) {
+      fetchConnections(page + 1, true);
     }
   };
 
   useEffect(() => {
-    fetchConnections();
+    fetchConnections(1, false);
   }, []);
 
   const connections = Array.isArray(connectionsFromStore?.data) 
@@ -82,7 +105,7 @@ const Connections = () => {
           <div className="text-red-500 text-5xl mb-4">⚠️</div>
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Something went wrong</h2>
           <p className="text-red-600 mb-6">{error}</p>
-          <button onClick={fetchConnections} className="btn btn-primary">
+          <button onClick={() => fetchConnections(1, false)} className="btn btn-primary">
             Try Again
           </button>
         </div>
@@ -195,6 +218,18 @@ const Connections = () => {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {hasMore && (
+          <div className="text-center mt-8">
+            <button
+              onClick={loadMore}
+              className={`btn btn-outline ${loadingMore ? 'loading' : ''}`}
+              disabled={loadingMore}
+            >
+              {loadingMore ? 'Loading...' : 'Load More'}
+            </button>
           </div>
         )}
       </div>

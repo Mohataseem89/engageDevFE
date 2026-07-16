@@ -2,16 +2,21 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
 import { useDispatch, useSelector } from "react-redux";
-import { addRequests, removeRequest } from "../utils/requestSlice";
+import { addRequests, appendRequests, removeRequest } from "../utils/requestSlice";
 import { Link } from "react-router-dom";
+
+const REQUESTS_PAGE_SIZE = 10;
 
 const Requests = () => {
   const dispatch = useDispatch();
   const requests = useSelector((store) => store.requests) || [];
 
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
   const [processingId, setProcessingId] = useState(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
 
   const reviewRequest = async (status, _id, userName) => {
     try {
@@ -30,22 +35,32 @@ const Requests = () => {
     }
   };
 
-  const fetchRequests = async () => {
-    setLoading(true);
+  const fetchRequests = async (pageToFetch = 1, append = false) => {
+    if (append) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
     setError(null);
     try {
       const res = await axios.get(`${BASE_URL}/user/requests/received`, {
+        params: { page: pageToFetch, limit: REQUESTS_PAGE_SIZE },
         withCredentials: true,
       });
 
+      let validRequests = [];
       if (res.data && Array.isArray(res.data.data)) {
-        const validRequests = res.data.data.filter((request) => 
+        validRequests = res.data.data.filter((request) => 
           request && request.fromUserId && request.fromUserId.firstName
         );
-        dispatch(addRequests(validRequests));
-      } else {
-        dispatch(addRequests([]));
       }
+      dispatch(append ? appendRequests(validRequests) : addRequests(validRequests));
+      setPage(pageToFetch);
+      setHasMore(
+        res.data.pagination
+          ? res.data.pagination.hasMore
+          : validRequests.length === REQUESTS_PAGE_SIZE
+      );
     } catch (err) {
       console.error("Error fetching requests:", err);
       setError(
@@ -54,11 +69,18 @@ const Requests = () => {
       );
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMore = () => {
+    if (!loadingMore && hasMore) {
+      fetchRequests(page + 1, true);
     }
   };
 
   useEffect(() => {
-    fetchRequests();
+    fetchRequests(1, false);
   }, []);
 
   if (loading) {
@@ -79,7 +101,7 @@ const Requests = () => {
           <div className="text-red-500 text-5xl mb-4">⚠️</div>
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Something went wrong</h2>
           <p className="text-red-600 mb-6">{error}</p>
-          <button onClick={fetchRequests} className="btn btn-primary">
+          <button onClick={() => fetchRequests(1, false)} className="btn btn-primary">
             Try Again
           </button>
         </div>
@@ -190,6 +212,18 @@ const Requests = () => {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {hasMore && (
+          <div className="text-center mt-8">
+            <button
+              onClick={loadMore}
+              className={`btn btn-outline ${loadingMore ? 'loading' : ''}`}
+              disabled={loadingMore}
+            >
+              {loadingMore ? 'Loading...' : 'Load More'}
+            </button>
           </div>
         )}
       </div>
