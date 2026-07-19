@@ -4,6 +4,8 @@ import { Link, useLocation } from "react-router-dom";
 import { BASE_URL } from "../utils/constants";
 import { removeUser } from "../utils/userSlice";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+
 
 const Navbar = () => {
   const user = useSelector((store) => store.user);
@@ -53,6 +55,7 @@ const Navbar = () => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      toast("Search is coming soon!");
       setSearchQuery("");
     }
   };
