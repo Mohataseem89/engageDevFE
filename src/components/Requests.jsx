@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { BASE_URL } from "../utils/constants";
+// import axios from "axios";
+// import { BASE_URL } from "../utils/constants";
 import { useDispatch, useSelector } from "react-redux";
 import { addRequests, appendRequests, removeRequest } from "../utils/requestSlice";
 import { Link } from "react-router-dom";
+import axiosInstance from "../utils/axiosInstance";
 
 const REQUESTS_PAGE_SIZE = 10;
 
@@ -21,11 +22,12 @@ const Requests = () => {
   const reviewRequest = async (status, _id, userName) => {
     try {
       setProcessingId(_id);
-      await axios.post(
-        `${BASE_URL}/request/review/${status}/${_id}`,
-        {},
-        { withCredentials: true }
-      );
+      await axiosInstance.post(`/request/review/${status}/${_id}`, {});
+      // await axios.post(
+      //   `${BASE_URL}/request/review/${status}/${_id}`,
+      //   {},
+      //   { withCredentials: true }
+      // );
       dispatch(removeRequest(_id));
     } catch (err) {
       console.error("Error reviewing request:", err);
@@ -43,10 +45,11 @@ const Requests = () => {
     }
     setError(null);
     try {
-      const res = await axios.get(`${BASE_URL}/user/requests/received`, {
-        params: { page: pageToFetch, limit: REQUESTS_PAGE_SIZE },
-        withCredentials: true,
-      });
+      const res = await axiosInstance.get("/user/requests/received");
+      // const res = await axios.get(`${BASE_URL}/user/requests/received`, {
+      //   params: { page: pageToFetch, limit: REQUESTS_PAGE_SIZE },
+      //   withCredentials: true,
+      // });
 
       let validRequests = [];
       if (res.data && Array.isArray(res.data.data)) {

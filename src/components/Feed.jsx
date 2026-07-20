@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
-import axios from "axios";
-import { BASE_URL } from "../utils/constants";
+// import axios from "axios";
+// import { BASE_URL } from "../utils/constants";
 import { useDispatch, useSelector } from "react-redux";
 import { addFeed, removeUserFromFeed } from "../utils/feedSlice";
 import UserCard from "./UserCard";
 import { Link } from "react-router-dom";
+import axiosInstance from '../utils/axiosInstance';
 
 const Feed = () => {
   const feed = useSelector((store) => store.feed);
@@ -46,10 +47,11 @@ const Feed = () => {
       const params = { page: pageToFetch, limit: 10 };
       if (skills) params.skills = skills;
 
-      const res = await axios.get(BASE_URL + "/feed", {
-        params,
-        withCredentials: true,
-      });
+      const res = await axiosInstance.get("/feed");
+      // const res = await axios.get(BASE_URL + "/feed", {
+      //   params,
+      //   withCredentials: true,
+      // });
 
       let feedData = [];
       if (res.data.data && Array.isArray(res.data.data)) {
@@ -107,11 +109,13 @@ const Feed = () => {
       setIsSwipeActive(true);
       dispatch(removeUserFromFeed(userId));
       
-      await axios.post(
-        `${BASE_URL}/request/send/${action}/${userId}`,
-        {},
-        { withCredentials: true }
-      );
+
+      await axiosInstance.post(`/request/send/${action}/${userId}`, {});
+      // await axios.post(
+      //   `${BASE_URL}/request/send/${action}/${userId}`,
+      //   {},
+      //   { withCredentials: true }
+      // );
       
       const message = action === 'interested' 
         ? `You connected with ${userName}! 💙`

@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useSelector } from "react-redux";
-import axios from "axios";
+// import axios from "axios";
 import toast from "react-hot-toast";
-import { BASE_URL } from "../utils/constants";
+// import { BASE_URL } from "../utils/constants";
 import { createSocketConnection } from "../utils/socket";
+import axiosInstance from "../utils/axiosInstance";
 
 const Chat = () => {
   const { targetUserId } = useParams();
@@ -33,9 +34,10 @@ const Chat = () => {
       try {
         setLoading(true);
         setError(null);
-        const res = await axios.get(`${BASE_URL}/chat/${targetUserId}`, {
-          withCredentials: true,
-        });
+        const res = await axiosInstance.get(`/chat/${targetUserId}`);
+        // const res = await axios.get(`${BASE_URL}/chat/${targetUserId}`, {
+        //   withCredentials: true,
+        // });
         setMessages(res.data.messages || []);
       } catch (err) {
         setError(
@@ -120,14 +122,17 @@ const Chat = () => {
 
     try {
       setIsUploadingFile(true);
-      const res = await axios.post(
-        `${BASE_URL}/chat/upload/${targetUserId}`,
-        uploadData,
-        {
-          withCredentials: true,
-          headers: { "Content-Type": "multipart/form-data" },
-        }
-      );
+      const res = await axiosInstance.post(`/chat/upload/${targetUserId}`, uploadData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      // const res = await axios.post(
+      //   `${BASE_URL}/chat/upload/${targetUserId}`,
+      //   uploadData,
+      //   {
+      //     withCredentials: true,
+      //     headers: { "Content-Type": "multipart/form-data" },
+      //   }
+      // );
       socketRef.current?.emit("sendMessage", {
         targetUserId,
         fileUrl: res.data.fileUrl,
@@ -205,11 +210,10 @@ const Chat = () => {
                   className={`flex ${isMine ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`max-w-[75%] rounded-2xl px-4 py-2 ${
-                      isMine
+                    className={`max-w-[75%] rounded-2xl px-4 py-2 ${isMine
                         ? "bg-blue-600 text-white rounded-br-sm"
                         : "bg-white text-gray-900 border border-gray-200 rounded-bl-sm"
-                    }`}
+                      }`}
                   >
                     {msg.fileType === "image" && msg.fileUrl && (
                       <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer">
@@ -225,9 +229,8 @@ const Chat = () => {
                         href={msg.fileUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`flex items-center gap-2 text-sm underline mb-1 ${
-                          isMine ? "text-white" : "text-blue-600"
-                        }`}
+                        className={`flex items-center gap-2 text-sm underline mb-1 ${isMine ? "text-white" : "text-blue-600"
+                          }`}
                       >
                         📎 Download file
                       </a>

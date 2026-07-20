@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import axios from "axios";
+// import axios from "axios";
 import { useDispatch } from "react-redux";
 import { addUser } from "../utils/userSlice";
 import { useNavigate } from "react-router-dom";
-import { BASE_URL } from "../utils/constants";
+// import { BASE_URL } from "../utils/constants";
+import axiosInstance from "../utils/axiosInstance";
+
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -110,13 +112,12 @@ const Login = () => {
       setLoading(true);
       setError("");
       
-      const res = await axios.post(
-        BASE_URL + "/login",
+      const res = await axiosInstance.post(
+         "/login",
         {
           email: formData.email.trim().toLowerCase(),
           password: formData.password,
-        },
-        { withCredentials: true }
+        }
       );
       
       dispatch(addUser(res.data));
@@ -145,12 +146,14 @@ const Login = () => {
       if (formData.age && parseInt(formData.age) >= 18) {
         signupData.age = parseInt(formData.age);
       }
+
+      const res = await axiosInstance.post("/signup", signupData);
       
-      const res = await axios.post(
-        BASE_URL + "/signup",
-        signupData,
-        { withCredentials: true }
-      );
+      // const res = await axios.post(
+      //   BASE_URL + "/signup",
+      //   signupData,
+      //   { withCredentials: true }
+      // );
       
       dispatch(addUser(res.data.data || res.data.data));
       navigate("/profile");

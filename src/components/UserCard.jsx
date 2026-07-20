@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import axios from "axios";
+// import axios from "axios";
 import { useDispatch } from "react-redux";
-import { BASE_URL } from "../utils/constants";
+// import { BASE_URL } from "../utils/constants";
 import { removeUserFromFeed } from "../utils/feedSlice";
+import axiosInstance from "../utils/axiosInstance";
 
 const UserCard = ({ user }) => {
   const { _id, firstName, lastName, photoUrl, age, gender, about } = user;
@@ -15,11 +16,12 @@ const UserCard = ({ user }) => {
       setIsProcessing(true);
       setActionTaken(status);
       
-      const res = await axios.post(
-        `${BASE_URL}/request/send/${status}/${userId}`, 
-        {}, 
-        { withCredentials: true }
-      );
+      const res = await axiosInstance.post(`/request/send/${status}/${userId}`, {});
+      // const res = await axios.post(
+      //   `${BASE_URL}/request/send/${status}/${userId}`, 
+      //   {}, 
+      //   { withCredentials: true }
+      // );
       
       // console.log("Request sent successfully:", res.data);
       

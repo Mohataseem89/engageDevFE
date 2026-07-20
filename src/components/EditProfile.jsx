@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import axios from "axios";
-import { BASE_URL } from "../utils/constants";
+// import axios from "axios";
+// import { BASE_URL } from "../utils/constants";
 import { useDispatch } from "react-redux";
 import { addUser } from "../utils/userSlice";
+import axiosInstance from "../utils/axiosInstance";
 
 const EditProfile = ({ user }) => {
   const [formData, setFormData] = useState({
@@ -13,7 +14,7 @@ const EditProfile = ({ user }) => {
     about: user?.about || "",
     photoUrl: user?.photoUrl || "",
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [notification, setNotification] = useState({ message: '', type: '' });
@@ -46,10 +47,13 @@ const EditProfile = ({ user }) => {
 
     try {
       setIsUploadingPhoto(true);
-      const res = await axios.post(`${BASE_URL}/profile/upload-photo`, uploadData, {
-        withCredentials: true,
+      const res = await axiosInstance.post("/profile/upload-photo", uploadData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+      // const res = await axios.post(`${BASE_URL}/profile/upload-photo`, uploadData, {
+      //   withCredentials: true,
+      //   headers: { "Content-Type": "multipart/form-data" },
+      // });
       setFormData((prev) => ({ ...prev, photoUrl: res.data.photoUrl }));
       showNotification("Photo uploaded! Don't forget to save your profile.", "success");
     } catch (err) {
@@ -78,8 +82,8 @@ const EditProfile = ({ user }) => {
     }
 
     try {
-      const res = await axios.post(
-        BASE_URL + "/profile/edit",
+      const res = await axiosInstance.post(
+         "/profile/edit",
         {
           firstName: formData.firstName.trim(),
           lastName: formData.lastName.trim(),
@@ -87,17 +91,17 @@ const EditProfile = ({ user }) => {
           age: formData.age ? parseInt(formData.age) : undefined,
           gender: formData.gender.trim(),
           about: formData.about.trim(),
-        },
-        { withCredentials: true }
+        }
+        // { withCredentials: true }
       );
-      
+
       dispatch(addUser(res?.data?.data));
       showNotification("Profile updated successfully! 🎉", 'success');
-      
+
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 
-                          err.response?.data || 
-                          "Failed to update profile";
+      const errorMessage = err.response?.data?.message ||
+        err.response?.data ||
+        "Failed to update profile";
       showNotification(errorMessage, 'error');
     } finally {
       setIsLoading(false);
@@ -126,7 +130,7 @@ const EditProfile = ({ user }) => {
             {icons[notification.type]}
           </div>
           <span className="flex-1 text-sm font-medium">{notification.message}</span>
-          <button 
+          <button
             onClick={() => setNotification({ message: '', type: '' })}
             className="text-black/80 hover:text-white text-lg leading-none flex-shrink-0"
           >
@@ -142,7 +146,7 @@ const EditProfile = ({ user }) => {
       <div className="relative h-48 overflow-hidden bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
         <img
           src={
-            formData.photoUrl || 
+            formData.photoUrl ||
             `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.firstName || 'User')}+${encodeURIComponent(formData.lastName || '')}&background=6366f1&color=fff&size=400`
           }
           alt="Profile Preview"
@@ -153,7 +157,7 @@ const EditProfile = ({ user }) => {
         />
         <div className="absolute inset-0 bg-black/10"></div>
       </div>
-      
+
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-bold text-gray-900">
@@ -167,7 +171,7 @@ const EditProfile = ({ user }) => {
             </span>
           )}
         </div>
-        
+
         <p className="text-gray-600 text-sm leading-relaxed">
           {formData.about || "Add a bio to tell others about yourself..."}
         </p>
@@ -178,10 +182,10 @@ const EditProfile = ({ user }) => {
   return (
     <>
       <NotificationToast />
-      
+
       <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          
+
           {/* Header */}
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
@@ -194,11 +198,11 @@ const EditProfile = ({ user }) => {
 
           {/* Main Content */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-            
+
             {/* Form Section */}
             <div className="lg:col-span-3">
               <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-                
+
                 <div className="space-y-6">
                   {/* Name Fields */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -215,7 +219,7 @@ const EditProfile = ({ user }) => {
                         maxLength="50"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Last Name *
@@ -281,7 +285,7 @@ const EditProfile = ({ user }) => {
                         onChange={(e) => handleInputChange('age', e.target.value)}
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Gender
@@ -321,7 +325,7 @@ const EditProfile = ({ user }) => {
                   </div>
 
                   {/* Save Button */}
-                  <button 
+                  <button
                     className={`w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-black font-semibold py-4 px-6 rounded-lg transition-all duration-200 flex items-center justify-center gap-3 ${isLoading ? 'cursor-not-allowed' : 'hover:shadow-lg'}`}
                     onClick={saveProfile}
                     disabled={isLoading || !formData.firstName.trim() || !formData.lastName.trim()}
@@ -353,9 +357,9 @@ const EditProfile = ({ user }) => {
                     This is how your profile will appear to others
                   </p>
                 </div>
-                
+
                 <PreviewCard />
-                
+
                 {/* Pro Tip */}
                 <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
                   <div className="flex items-start gap-3">

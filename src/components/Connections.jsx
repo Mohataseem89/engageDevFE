@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import axios from "axios";
-import { BASE_URL } from "../utils/constants";
+// import axios from "axios";
+// import { BASE_URL } from "../utils/constants";
 import { addConnections, appendConnections, removeConnections } from "../utils/connectionsSlice";
+import axiosInstance from '../utils/axiosInstance';
+
 
 const CONNECTIONS_PAGE_SIZE = 12;
 
@@ -27,10 +29,12 @@ const Connections = () => {
       }
       setError(null);
 
-      const res = await axios.get(BASE_URL + "/user/connections", {
-        params: { page: pageToFetch, limit: CONNECTIONS_PAGE_SIZE },
-        withCredentials: true,
-      });
+      const res = await axiosInstance.get("/user/connections");
+
+      // const res = await axios.get(BASE_URL + "/user/connections", {
+      //   params: { page: pageToFetch, limit: CONNECTIONS_PAGE_SIZE },
+      //   withCredentials: true,
+      // });
       
       let connectionsData = [];
       if (res.data.data && Array.isArray(res.data.data)) {
